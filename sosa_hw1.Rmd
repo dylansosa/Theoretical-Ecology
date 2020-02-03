@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 # Problem 1
 
 1. Discuss density-independent and density-dependent population growth. What is different about the growth rate in both cases? 
-	1. Density-independent populations have exponential growth. They have a linear and fixed growth rate.
+	1. Density-independent growth is constant. 
 	2. Density-dependent populations have logistic growth and a characteristic sigmoid curve. They have a non-linear and non-fixed growth rate.
 		
 ```{r results='hide', message=FALSE, warning=FALSE}
@@ -36,7 +36,7 @@ grid.arrange(exponential, logistic, nrow = 1)
 ```
 
 2. For population (or density, remember that for fixed area these are equivalent) dependent growth, explain positive and negative versions in terms of the dependence of the growth rate on population size. 
-	1. The Allee effect is an example of positive density dependence of growth rate on population size. The rate $r$ is highest for small population sizes, $N$. These positive density dependent growth rate are unstable.
+	1. The Allee effect is an example of positive density dependence of growth rate on population size. The rate $r$ is highest for small population sizes, $N$.
 	2. As density increases over time resources become scarce, causing individuals to die off which gcauses negative density dependence. As the population $N$ increases, the growth rate $r$ decreases. 
 
 3. Describe a brief biological or ecological scenario in which you might expect to find positive and negative density dependence. Keep it brief.
@@ -93,6 +93,8 @@ plotPerCap <-
 
 grid.arrange(plotPop, plotPerCap, nrow = 1)
 ```
+Per capita growth rate for logisitc growth is maximized at N = 0, and the Allee model is maximized at N = 5. Total population growth rate for logistic models is maximized at N/2, and it is maximized for the Allee model approximately N/2 as well. 
+
 
 # Problem 3
 ```{r results='hide', message=FALSE, warning=FALSE}
@@ -126,13 +128,15 @@ rickerMap<-function(N0,r,TimeSteps){
   Results<-rep(0,TimeSteps) 
   Results[1]<-N0 
   for (j in 2:TimeSteps){
-    Results[j]<-exp(r*(1-(Results[j-1]/2)))*Results[j-1]
+    Results[j]<-r*Results[j-1]*exp(-2*Results[j-1])
   } 
   return(Results)
 }
 
+
+
 ## Plot the Diagram 
-plot(0,0, xlim=c(0,4), ylim=c(-0.05,10),type="n", xlab="r", ylab="X") 
+plot(0,0, xlim=c(0,20), ylim=c(-0.05,10),type="n", xlab="r", ylab="X") 
 for (r in seq(0.001,100,0.005)) { # These are the initial and final values for r
   # out <- LogisticMap(0.5,r,2500) # Initial conditions 
   out <- rickerMap(0.5,r,2500) # Initial conditions 
@@ -161,48 +165,117 @@ ExponentialSolution<-function(N0,t,lambda){
   return (N0*exp(t*lambda))
 }
 
-N0<-0.25
-lambda<-0.3
-errorsDF <- data.frame(dt = c(0.05,0.1,0.2), Error = NA) # init df
-plot(c(0,0),col="0",xlim=c(0,10),ylim=c(0,(N0*exp(lambda*10)+1)))
-for (Deltat in c(0.05,0.1,0.2)){
-  PointsToEstimate<-seq(0,10,by=Deltat)
-  Iterations<-length(PointsToEstimate)-1
-  Approx<-rep(0,Iterations+1)
-  RealSol<-rep(0,Iterations+1)
-  Approx[1]<-RealSol[1]<-N0
-  for (i in 1:Iterations){
-    RealSol[i+1]<-ExponentialSolution(N0,Deltat*i,lambda)		
-    Approx[i+1]<-Euler(Approx[i],Deltat,ExponentialGrowth,lambda)		
-  }
-  if (Deltat==0.05) {
-    mycol="red"
-    errorsDF[1,2] <- abs(RealSol[length(RealSol)] - Approx[length(Approx)])
-    # last element in approx/real vectors is at time = 10
-    # update data frame with error at t = 10 for each Deltat
-  }
-  if (Deltat==0.1) {
-    mycol="blue"
-    errorsDF[2,2] <- abs(RealSol[length(RealSol)] - Approx[length(Approx)])
-  }
-  if (Deltat==0.2)  {
-    mycol="green"
-    errorsDF[3,2] <- abs(RealSol[length(RealSol)] - Approx[length(Approx)])
-  }
-  
-  points(RealSol~PointsToEstimate,col="black",type="l")
-  points(Approx~PointsToEstimate,col=mycol,type="l")
+LogisticGrowth <- function(x, lambda){
+   return (lambda*x*(1-x))
 }
 
-ggplot(errorsDF, aes(errorsDF$dt, errorsDF$Error)) +
-  geom_line() +
-  labs(x = 'Step Size', y = 'Error at t = 10', title = 'Error as fxn of step size') +
-  theme(
-    plot.title = element_text(size = 8),
-    axis.title = element_text(size = 8),
-    axis.text = element_text(size = 8),
-    legend.title = element_text(size = 8)
-  )
+LogisticSolution <- function(N0,t,lambda){
+   return ((N0*exp(t*lambda))/(1+((N0*(exp(lambda*t)-1)))))
+}
+
+#Exponential Numerical Integration
+N0<-0.25
+lambda<-0.3
+plot(c(0,0),col="0",xlim=c(0,10),ylim=c(0,(N0*exp(lambda*10)+1)), xlab="t", ylab="", main="Exponential Numerical Integration")
+legend("topleft", legend=c(expression(paste(delta,"t=", "0.05")), expression(paste(delta,"t=", "0.1")), 
+                           expression(paste(delta,"t=", "0.2")), "exact"),
+       col=c("red", "blue", "green", "black"), cex=0.8, lty = 1,
+       box.lty=1, box.lwd=1)
+for (Deltat in c(0.05,0.1,0.2)){
+   PointsToEstimate<-seq(0,10,by=Deltat)
+   Iterations<-length(PointsToEstimate)-1
+   Approx<-rep(0,Iterations+1)
+   RealSol<-rep(0,Iterations+1)
+   Approx[1]<-RealSol[1]<-N0
+   for (i in 1:Iterations){
+      RealSol[i+1]<-ExponentialSolution(N0,Deltat*i,lambda)		
+      Approx[i+1]<-Euler(Approx[i],Deltat,ExponentialGrowth,lambda)		
+   }
+   if (Deltat==0.05) mycol="red"
+   if (Deltat==0.1) mycol="blue"
+   if (Deltat==0.2) mycol="green"
+   points(RealSol~PointsToEstimate,col="black",type="l")
+   points(Approx~PointsToEstimate,col=mycol,type="l")
+}
+
+#Exponential: Error vs Step-Size
+N0<-0.25
+lambda<-0.3
+initerror<-0
+plot(c(0,0),col="0",xlim=c(0,10),ylim=c(-.02,.5), xlab = "t", ylab = "Error", main="Exponential: Error by Step Size")
+legend("topleft", legend=c(expression(paste(delta,"t=", "0.05")), expression(paste(delta,"t=", "0.1")), expression(paste(delta,"t=", "0.2"))),
+       col=c("red", "blue", "green"), cex=0.8, lty = 1,
+       box.lty=1, box.lwd=1)
+for (Deltat in c(0.05,0.1,0.2)){
+   PointsToEstimate<-seq(0,10,by=Deltat)
+   Iterations<-length(PointsToEstimate)-1
+   Approx<-rep(0,Iterations+1)
+   RealSol<-rep(0,Iterations+1)
+   Error<-rep(0,Iterations+1)
+   Approx[1]<-RealSol[1]<-N0
+   Error[1]<-initerror
+   for (i in 1:Iterations){
+      RealSol[i+1]<-ExponentialSolution(N0,Deltat*i,lambda)		
+      Approx[i+1]<-Euler(Approx[i],Deltat,ExponentialGrowth,lambda)
+      Error[i+1]<-RealSol[i+1]-Approx[i+1]
+   }
+   if (Deltat==0.05) mycol="red"
+   if (Deltat==0.1) mycol="blue"
+   if (Deltat==0.2) mycol="green"
+   points(Error~PointsToEstimate,col=mycol,type="l")
+}
+
+#Logistic Numerical Integration
+N0<-0.25
+lambda<-0.3
+plot(c(0,0),col="0",xlim=c(0,10),ylim=c(0,1), ylab="", xlab="t", main="Logistic Numerical Integration")
+legend("topleft", legend=c(expression(paste(delta,"t=", "0.05")), expression(paste(delta,"t=", "0.1")), 
+                           expression(paste(delta,"t=", "0.2")), "exact"),
+       col=c("red", "blue", "green", "black"), cex=0.8, lty = 1,
+       box.lty=1, box.lwd=1)
+for (Deltat in c(0.05,0.1,0.2)){
+   PointsToEstimate<-seq(0,10,by=Deltat)
+   Iterations<-length(PointsToEstimate)-1
+   Approx<-rep(0,Iterations+1)
+   RealSol<-rep(0,Iterations+1)
+   Approx[1]<-RealSol[1]<-N0
+   for (i in 1:Iterations){
+      RealSol[i+1]<-LogisticSolution(N0,Deltat*i,lambda)		
+      Approx[i+1]<-Euler(Approx[i],Deltat,LogisticGrowth,lambda)		
+   }
+   if (Deltat==0.05) mycol="red"
+   if (Deltat==0.1) mycol="blue"
+   if (Deltat==0.2) mycol="green"
+   points(RealSol~PointsToEstimate,col="black",type="l")
+   points(Approx~PointsToEstimate,col=mycol,type="l")
+}
+
+#Logistic: Error vs Step Size
+N0<-0.25
+lambda<-0.3
+initerror<-0
+plot(c(0,0),col="0",xlim=c(0,10),ylim=c(-.003,.003), xlab = "t", ylab = "Error", main="Logistic: Error by Step Size")
+legend("bottomleft", legend=c(expression(paste(delta,"t=", "0.05")), expression(paste(delta,"t=", "0.1")), expression(paste(delta,"t=", "0.2"))),
+       col=c("red", "blue", "green"), cex=0.8, lty = 1,
+       box.lty=1, box.lwd=1)
+for (Deltat in c(0.05,0.1,0.2)){
+   PointsToEstimate<-seq(0,10,by=Deltat)
+   Iterations<-length(PointsToEstimate)-1
+   Approx<-rep(0,Iterations+1)
+   RealSol<-rep(0,Iterations+1)
+   Error<-rep(0,Iterations+1)
+   Approx[1]<-RealSol[1]<-N0
+   Error[1]<-initerror
+   for (i in 1:Iterations){
+      RealSol[i+1]<-LogisticSolution(N0,Deltat*i,lambda)		
+      Approx[i+1]<-Euler(Approx[i],Deltat,LogisticGrowth,lambda)
+      Error[i+1]<-RealSol[i+1]-Approx[i+1]
+   }
+   if (Deltat==0.05) mycol="red"
+   if (Deltat==0.1) mycol="blue"
+   if (Deltat==0.2) mycol="green"
+   points(Error~PointsToEstimate,col=mycol,type="l")
+}
 ```
 Euler's Method error at $\Delta{t} = (0.005, 0.1, 0.2)$ for exponential growth. Error values were obtained from the difference between the absolute values of the analytic solution and the numerical solution. Error increases rapidly as step size increases.
 
@@ -224,7 +297,7 @@ ExponentialGrowth<-function(t, state, parameters) {
 }
 
 ## This function runs the model and produces the trajectory
-RunExponentialGrowth<-function(MaxTime=10,GrowthRate=0.1,InitialX=1.0){
+RunExponentialGrowth<-function(MaxTime=30,GrowthRate=0.1,InitialX=1.0){
   times <- seq(0, MaxTime, by = 0.01)
   parameters <- c(r=GrowthRate)
   state <- c(X=InitialX)
@@ -240,7 +313,7 @@ logisticGrowth <-function(t, state, parameters) {
   return(list(dX)) 
 }
 
-runLogisticGrowth<-function(MaxTime=10,GrowthRate=0.1,InitialX=1.0){
+runLogisticGrowth<-function(MaxTime=30,GrowthRate=0.1,InitialX=1.0){
   times <- seq(0, MaxTime, by = 0.01)
   parameters <- c(r=GrowthRate)
   state <- c(X=InitialX)
@@ -256,7 +329,7 @@ alleeGrowth<-function(t, state, parameters) {
   return(list(dX)) 
 }
 
-runAlleeGrowth<-function(MaxTime=10,GrowthRate=0.1,InitialX=1.0){
+runAlleeGrowth<-function(MaxTime=30,GrowthRate=0.1,InitialX=1.0){
   times <- seq(0, MaxTime, by = 0.01)
   parameters <- c(r=GrowthRate)
   state <- c(X=InitialX)
@@ -272,7 +345,7 @@ levinsGrowth<-function(t, state, parameters) {
   return(list(dX)) 
 }
 
-runLevinsGrowth <-function(MaxTime=10,GrowthRate=0.1,InitialX=1.0){
+runLevinsGrowth <-function(MaxTime=30,GrowthRate=0.1,InitialX=1.0){
   times <- seq(0, MaxTime, by = 0.01)
   parameters <- c(r=GrowthRate)
   state <- c(X=InitialX)
@@ -288,7 +361,7 @@ thetaLogisticGrowth<-function(t, state, parameters) {
   return(list(dX))
 }
 
-runThetaLogisticGrowth <-function(MaxTime=10,GrowthRate=0.1,InitialX=1.0){
+runThetaLogisticGrowth <-function(MaxTime=30,GrowthRate=0.1,InitialX=1.0){
   times <- seq(0, MaxTime, by = 0.01)
   parameters <- c(r=GrowthRate)
   state <- c(X=InitialX)
@@ -297,10 +370,10 @@ runThetaLogisticGrowth <-function(MaxTime=10,GrowthRate=0.1,InitialX=1.0){
   return(out)
 }
 
-RunExponentialGrowth(MaxTime=10,GrowthRate=0.1,InitialX=1.0)
-runLogisticGrowth(MaxTime=10,GrowthRate=0.1,InitialX=1.0)
-runAlleeGrowth(MaxTime=10,GrowthRate=0.1,InitialX=1.0)
-runLevinsGrowth(MaxTime=10,GrowthRate=0.1,InitialX=1.0)
-runThetaLogisticGrowth(MaxTime=10,GrowthRate=0.1,InitialX=1.0)
+RunExponentialGrowth(MaxTime=30,GrowthRate=0.1,InitialX=1.0)
+runLogisticGrowth(MaxTime=30,GrowthRate=0.1,InitialX=1.0)
+runAlleeGrowth(MaxTime=30,GrowthRate=0.1,InitialX=1.0)
+runLevinsGrowth(MaxTime=30,GrowthRate=0.1,InitialX=1.0)
+runThetaLogisticGrowth(MaxTime=30,GrowthRate=0.1,InitialX=1.0)
 ```
 Numerical solutions for the logistic, Allee, Levins, and theta-logistic ODEs over time.
