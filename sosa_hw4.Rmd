@@ -1,0 +1,221 @@
+---
+title: "Theo Eco HW 4"
+author: "Dylan Sosa"
+date: "2/5/2020"
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+## a
+![Life cycle diagram for matrix A](/Users/dylansosa/Documents/UChicago/Academics/Winter Quarter 2020/Theo Eco/HW/lifeCycle.png)
+
+
+## b
+```{r}
+A <- matrix(c(0.2,0.8,1.5,0), nrow=2,ncol=2)
+stageVector <- as.vector(c(100,10))
+
+
+maxT <- 100
+# df <- data.frame( N1 = integer(T), N2 = integer(T))
+df <- data.frame(matrix(nrow = maxT, ncol = 4 ))
+colnames(df) <- c("Time", "N1", "N2", "Ntot")
+
+for(i in seq(1,maxT)){
+  B <- (A) %*% stageVector
+  df$N1[i] <- B[1]
+  df$N2[i] <- B[2]
+  df$Ntot[i] <- B[1]+B[2]
+  df$Time[i] <- i
+  df$proportion <- df$N1 / df$Ntot
+  df$proportion2 <- df$N2 / df$Ntot
+  stageVector <- B
+  # updating values of stageVector 
+}
+
+ggplot() +
+  geom_line(aes(x=df$Time,y=df$Ntot, color = 'Ntot')) +
+  geom_line(aes(x=df$Time,y=df$N1, color = 'N1')) +
+  geom_line(aes(x=df$Time,y=df$N2, color = 'N2')) +
+  xlab('Time') +
+  ylab('Population') +
+  ggtitle('Pop of Each Stage and Total Pop, init pop (100,10)') +
+  scale_colour_manual("Legend", values = c("forestgreen", "dodgerblue2", 'orange')) +
+  theme(
+    plot.title = element_text(size = 8),
+    axis.title = element_text(size = 8),
+    axis.text = element_text(size = 8),
+    legend.title = element_text(size = 8)
+  )
+```
+
+```{r}
+stageVector2 <- as.vector(c(10,100))
+
+maxT <- 100
+# df22 <- data.frame( N1 = integer(T), N2 = integer(T))
+df2 <- data.frame(matrix(nrow = maxT, ncol = 4 ))
+colnames(df2) <- c("Time", "N1", "N2", "Ntot")
+
+for(i in seq(1,maxT)){
+  B2 <- (A) %*% stageVector2
+  df2$N1[i] <- B2[1]
+  df2$N2[i] <- B2[2]
+  df2$Ntot[i] <- B2[1]+B2[2]
+  df2$Time[i] <- i
+  df2$proportion <- df2$N1 / df2$Ntot
+  df2$proportion2 <- df2$N2 / df2$Ntot
+  stageVector2 <- B2
+  # updating values of stageVector 
+}
+
+ggplot() +
+  geom_line(aes(x=df2$Time,y=df2$Ntot, color = 'Ntot')) +
+  geom_line(aes(x=df2$Time,y=df2$N1, color = 'N1')) +
+  geom_line(aes(x=df2$Time,y=df2$N2, color = 'N2')) +
+  xlab('Time') +
+  ylab('Population') +
+  ggtitle('Pop of Each Stage and Total Pop, init pop(10,100)') +
+  scale_colour_manual("Legend", values = c("forestgreen", "dodgerblue2", 'orange')) +
+  theme(
+    plot.title = element_text(size = 8),
+    axis.title = element_text(size = 8),
+    axis.text = element_text(size = 8),
+    legend.title = element_text(size = 8)
+  )
+
+```
+
+
+## c
+```{r}
+# N1/Ntot
+# N2/Ntot 
+# plot these against time 
+
+ggplot() +
+  geom_line(aes(x=df$Time,y= (df$N1 / df$Ntot), color = 'N1/Ntot')) +
+  geom_line(aes(x=df$Time,y= (df$N2 / df$Ntot), color = 'N2/Ntot')) +
+  xlab('Time') +
+  ylab('Population') +
+  ggtitle('Time Evolution of Stage Structure Vector, init pop(100,10)') +
+  scale_colour_manual("Legend", values = c("forestgreen", "dodgerblue2")) +
+  annotate("text", x = 87, y = 0.6, label = "t = 88") +
+  annotate("text", x = 87, y = 0.4, label = "t = 88") +
+  theme(
+    plot.title = element_text(size = 8),
+    axis.title = element_text(size = 8),
+    axis.text = element_text(size = 8),
+    legend.title = element_text(size = 8)
+  )
+```
+
+```{r}
+ggplot() +
+  geom_line(aes(x=df2$Time,y= (df2$N1 / df2$Ntot), color = 'N1/Ntot')) +
+  geom_line(aes(x=df2$Time,y= (df2$N2 / df2$Ntot), color = 'N2/Ntot')) +
+  xlab('Time') +
+  ylab('Population') +
+  ggtitle('Time Evolution of Stage Structure Vector, init pop(10,100)') +
+  scale_colour_manual("Legend", values = c("forestgreen", "dodgerblue2")) +
+  annotate("text", x = 88, y = 0.6, label = "t = 87") +
+  annotate("text", x = 88, y = 0.4, label = "t = 87") +
+  theme(
+    plot.title = element_text(size = 8),
+    axis.title = element_text(size = 8),
+    axis.text = element_text(size = 8),
+    legend.title = element_text(size = 8)
+  )
+
+```
+
+
+## d
+```{r}
+eig <- eigen(A)
+print(
+  paste('Eigenvalue is:',
+        eig$values
+        ))
+# both eigen values
+
+print('Eigenvectors are:')
+eig$vectors
+# eig$vectors[,1]
+# eig$vectors[,2]
+# eigen vectors are normalized 
+```
+
+## e
+```{r}
+# trying to know where system is going based on init condition 
+# invert matrix to known soln to solve for where we're at 
+
+
+# What are the values of the projection coefficients? 
+# Plot the spectral decomposition of each population stage and verify that it is the same as your numerical solution above.
+# cVector <- solve(A) %*% stageVector
+
+stageVector <- as.vector(c(100,10))
+# From Will: 
+  # Make sure you have normalized your eigenvectors prior to using them to calculate your c vector {c1, c2}.
+eigVectorsNormalized = eig$vectors / sqrt((eig$vectors[,1]**2) + (eig$vectors[,2]**2))
+cVectorNormalized <- solve(eigVectorsNormalized) %*% stageVector
+# solve computes inverse of A 
+cVectorNormalized
+
+# make a data.frame
+# fill it based on the spectral decomp function 
+# x(t) = c1v1e^lambda1,t + c2v2e^lambda2,t
+# t is i from for loop
+# v is eigenvector
+spectralDecomp <- data.frame(matrix(nrow = maxT, ncol = 3 ))
+names(spectralDecomp) <- c('Time','N1xt','N2xt')
+
+for(i in 1:maxT){
+  spectralDecomp$Time[i] <- i
+  spectralDecomp$N1xt[i] <-
+        cVectorNormalized[1] * eig$vectors[1,1]*eig$values[1]**i +
+        cVectorNormalized[2] * eig$vectors[1,2]*eig$values[2]**i
+
+  spectralDecomp$N2xt[i] <-
+        cVectorNormalized[1] * eig$vectors[2,1]*eig$values[1]**i +
+        cVectorNormalized[2] * eig$vectors[2,2]*eig$values[2]**i
+}
+
+ggplot() +
+  geom_line(aes(x = spectralDecomp$Time, y = spectralDecomp$N1xt, color = 'spectralN1')) +
+  geom_line(aes(x = spectralDecomp$Time, y = spectralDecomp$N2xt, color = 'spectralN2')) +
+  geom_line(aes(x=df$Time,y=df$Ntot, color = 'Ntot')) +
+  geom_line(aes(x=df$Time,y=df$N1, color = 'N1')) +
+  geom_line(aes(x=df$Time,y=df$N2, color = 'N2')) +
+  xlab('Time') +
+  ylab('Population') +
+  ggtitle('Spectral Decomp & Pop of Each Stage and Total Pop, init pop (100,10)') +
+  scale_colour_manual("Legend", values = c("forestgreen", "dodgerblue2", 'orange','red','pink','purple')) +
+  theme(
+    plot.title = element_text(size = 8),
+    axis.title = element_text(size = 8),
+    axis.text = element_text(size = 8),
+    legend.title = element_text(size = 8)
+  )
+# combined plots 
+```
+
+## f
+### Verify that the stage structure of the two initial conditions  above converge to the same late time stage structure vector. What is the convergence time? Note this time on your plot. 
+```{r}
+print(df$proportion[nrow(df)])
+print(df$proportion2[nrow(df)])
+
+print(df2$proportion[nrow(df2)])
+print(df2$proportion2[nrow(df2)])
+
+filter(df, Time == 87)
+filter(df2, Time == 88)
+print('Stage structure of both init pops converge to the same stage structure vector?')
+```
